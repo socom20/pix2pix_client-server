@@ -1,0 +1,12 @@
+{
+ 'target_fps':  5,                      # (int) Cantidad de fps a los que se trata de mandar capturas al servidor
+ 'host':        'localhost',            # (str) ip o URL del servidor pix2pix
+ 'port':        8080,                   # (int) puerto de escucha del servidor
+ 'cam_index':   null,                   # (int or null) id del dispositivo de captura (opencv)
+ 'win_name':    'Model Prediction',     # Nombre de la ventana mostrada
+ 'win_shape':   (600,600),              # (int tuple)  tamaño de la ventana de predicción
+ 'cap_shape':   (256,256),              # (int tuple)  tamaño de la ventana de captura
+ 'pts':         null,                   # Puntos de la captura para realizar la transformación de perspectiva
+ 'password':    'sergio'                  # Password necesario para la conexion al servidor
+}
+

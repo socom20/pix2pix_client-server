@@ -9,6 +9,7 @@ from SimpleWebSocketServer import WebSocket, SimpleWebSocketServer, SimpleSSLWeb
 from optparse import OptionParser
 
 import numpy as np
+import json
 
 sys.path.append('../pix2pix_wrapper')
 from pix2pix_wrapper import pix2pix_wrapper
@@ -58,9 +59,15 @@ from pix2pix_wrapper import pix2pix_wrapper
 clients = []
 class Pix2Pix_predictor(WebSocket):
 
+    
     def predict(self, img_bytes):
         img   = Image.open( io.BytesIO(img_bytes) )
+         
         img_v = np.array(img).astype(np.float32)[np.newaxis,...] / 255.0
+
+        if len(img_v.shape) == 3:
+            # New axis for the color channel
+            img_v = np.repeat(img_v[...,np.newaxis], 3, axis=-1)
 
         img_pred = model.predict(img_v)[0]
         
@@ -85,19 +92,69 @@ class Pix2Pix_predictor(WebSocket):
 
     def handleMessage(self):
         global data
-        print(' - msg type={} from={}'.format(type(self.data), self.address))
+        print(' - msg_type={} from={}'.format(type(self.data), self.address))
+
+        try:
+            if 'pass_ok' not in dir(self):
+                self.pass_ok = False
+                
+            if self.pass_ok == False:
+                if ws_server.password is None:
+                    # There is no password
+                    self.pass_ok = True
+                    
+                elif type(self.data) is str:
+                    # This msg is forvalidateing the password
+                    if self.data == ws_server.password:
+                        self.pass_ok = True
+                        print(' - handleMessage: PassWord OK!!')
+                        
+                        e_s = json.dumps({'msg': 'PassWord OK!!'})
+                        self.sendMessage( e_s )
+
+                        # Nothing more to do!!!
+                        return None
+                    
+                    else:
+                        print(' - handleMessage: BaD PassWord', file=sys.stderr)
+                    
         
-        if type( self.data ) is bytearray:
-            data = bytes(self.data)
-            
-            pred = self.predict(data)
-            
-            print(' - sending prediction ...')
-            self.sendMessage( pred )
+            if self.pass_ok:
+                # Everything is ok, lets interpretate the msg
+                if type( self.data ) is bytearray:
+                    data = bytes(self.data)
+                    print(' Makeing prediction ...')
+                    try:
+                        pred = self.predict(data)
+                    except Exception as e:
+                        e_d = {'error': str(e), 'where':'predict'}
+                        e_s = json.dumps(e_d)
+                        print("WARNING:", e, file=sys.stderr)
+                        self.sendMessage( e_s )
+                        return None
+                        
+                    print(' - sending prediction ...')
+                    self.sendMessage( pred )
 
-        elif type( self.data ) is str:
-            self.sendMessage(' RC:' + self.data)
+                elif type( self.data ) is str:
+                    self.sendMessage(' RC:' + self.data)
+                
+            else:
+                # Everything is not ok, connection refused!!!
+                # Password rejected
+                e_d = {'error': 'critical ;)', 'where':'handleMessage'}
+                e_s = json.dumps(e_d)
+                self.sendMessage( e_s )
+                self.close()
 
+
+        except Exception as e:
+            e_d = {'error': str(e), 'where':'handleMessage: unhandled'}
+            e_s = json.dumps(e_d)
+            self.sendMessage( e_s )
+            print(' - ERROR, handleMessage: unhandled:', e, file=sys.stderr)
+    
+        return None
 
     def handleClose(self):
         clients.remove(self)
@@ -114,7 +171,15 @@ def start_new_server(server):
 
 
 class ws_server:
-    def __init__(self, ws_class, host='localhost', port=8000, use_ssl=False, certfile='', keyfile=''):
+    def __init__(self,
+                 ws_class,
+                 host='localhost',
+                 port=8000,
+                 use_ssl=False,
+                 certfile='',
+                 keyfile='',
+                 password='rtypopuioghj951435dsads'):
+        
         self.host = host
         self.port = port
         self.ws_class = ws_class
@@ -122,7 +187,10 @@ class ws_server:
 
         self.certfile = certfile
         self.keyfile  = keyfile
+        ws_server.password = password
 
+    
+        
         self.ssl_version = ssl.PROTOCOL_TLSv1
 
         self.server = None
@@ -167,13 +235,15 @@ class ws_server:
 if __name__ == "__main__":
     parser = OptionParser(usage="usage: %prog [options]", version="%prog 1.0")
     parser.add_option("--host", default='0.0.0.0', type='string', action="store", dest="host", help="hostname (localhost)")
-    parser.add_option("--port", default=8000, type='int', action="store", dest="port", help="port (8000)")
+    parser.add_option("--port", default=8080, type='int', action="store", dest="port", help="port (80)")
+    parser.add_option("--password", default=None, type='str', action="store", dest="password", help="server password")
     parser.add_option("--ssl", default=0, type='int', action="store", dest="ssl", help="ssl (1: on, 0: off (default))")
     parser.add_option("--cert", default='./cert.pem', type='string', action="store", dest="cert", help="cert (./cert.pem)")
     parser.add_option("--key", default='./key.pem', type='string', action="store", dest="key", help="key (./key.pem)")
     parser.add_option("--checkpoint", default='../pix2pix_wrapper/model_checkpoint', type='string', action="store", dest="checkpoint", help="a folder where the model checkpoint is located.")
 
-    (options, args) = parser.parse_args()
+
+    (options, args) = parser.parse_args(['--password', 'sergio'])
 
     # Starting Predictor
     model = pix2pix_wrapper(options.checkpoint, load_model=True)
@@ -183,6 +253,7 @@ if __name__ == "__main__":
     server = ws_server(ws_class=cls,
                        host=options.host,
                        port=options.port,
+                       password=options.password,
                        use_ssl=options.ssl,
                        certfile=options.cert,
                        keyfile=options.key)
