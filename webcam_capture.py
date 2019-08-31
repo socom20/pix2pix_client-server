@@ -75,7 +75,7 @@ class cam_capture():
 
         return frame
 
-    def frame_post_proc(self, frame, do_canny=True, do_close=True):
+    def frame_pos_proc(self, frame, do_canny=True, do_close=True):
         if self.M is None:
             frame = cv2.resize(frame, self.cap_shape)
         else:
@@ -91,13 +91,16 @@ class cam_capture():
                                          cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5)))
 
             frame = 255-frame
+
+        if len(frame.shape) == 2:
+            frame = np.repeat(frame[...,np.newaxis], 3, axis=-1)
             
         return frame
         
 
     def capture(self):
         frame = self._raw_capture()
-        frame = self.frame_post_proc(frame)
+        frame = self.frame_pos_proc(frame)
         return frame
             
 
@@ -116,7 +119,7 @@ class cam_capture():
         
         while True:
             raw_frame  = self._raw_capture()
-            proc_frame = self.frame_post_proc(raw_frame, do_canny)
+            proc_frame = self.frame_pos_proc(raw_frame, do_canny)
 
             self.windows.update_img(img=raw_frame,
                                     win_name='Raw Capture')

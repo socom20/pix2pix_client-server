@@ -97,7 +97,8 @@ class pix2pix_stream_handler:
 
         # Object for cam capture
         self.cam = cam_capture(cam_index=self.cam_index,
-                               cap_shape=self.cap_shape)
+                               cap_shape=self.cap_shape,
+                               pts=self.pts)
         
         self.window = cv2_windows()
         return None
