@@ -61,7 +61,10 @@ class cv2_windows:
         
             if win_name not in self.win_d.keys():
                 raise Exception(' - ERROR, update_img: bad window name.')
-        
+
+        if len(img.shape) == 2:
+            img = np.repeat(img[...,np.newaxis], 3, axis=-1)
+            
         img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
         win_img = cv2.resize(img, tuple(self.win_d[win_name][0]) )
         

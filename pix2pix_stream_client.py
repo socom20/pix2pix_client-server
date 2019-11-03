@@ -77,6 +77,7 @@ class pix2pix_stream_handler:
                  host='localhost',
                  port=8000,
                  cam_index=None,
+                 test_img='img_test',
                  win_name='Model Prediction',
                  win_shape=(600,600),
                  cap_shape=(256,256),
@@ -87,6 +88,7 @@ class pix2pix_stream_handler:
         self.host = host
         self.port = port
         self.cam_index = cam_index
+        self.test_img  = test_img
         self.win_name  = win_name
         self.win_shape = win_shape
         self.cap_shape = cap_shape
@@ -98,6 +100,7 @@ class pix2pix_stream_handler:
         # Object for cam capture
         self.cam = cam_capture(cam_index=self.cam_index,
                                cap_shape=self.cap_shape,
+                               img_path=self.test_img,
                                pts=self.pts)
         
         self.window = cv2_windows()

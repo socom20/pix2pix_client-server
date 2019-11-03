@@ -3,10 +3,12 @@
  'host':        'localhost',            # (str) ip o URL del servidor pix2pix
  'port':        8080,                   # (int) puerto de escucha del servidor
  'cam_index':   null,                   # (int or null) id del dispositivo de captura (opencv)
+ 'test_img':    'test_face.jpeg',       # (str) Imagen de testeo (se utiliza si cam_index=null)
  'win_name':    'Model Prediction',     # (str) Nombre de la ventana mostrada
  'win_shape':   (600,600),              # (int tuple)  tamaño de la ventana de predicción
  'cap_shape':   (256,256),              # (int tuple)  tamaño de la ventana de captura
- 'pts':         [[398,441],[202,521],[449,599],[267,698]],  # (list(list(int))) Puntos de la captura para realizar la transformación de perspectiva
+# 'pts':         [[398,441],[202,521],[449,599],[267,698]],  # (list(list(int))) Puntos de la captura para realizar la transformación de perspectiva
+ 'pts':         null,  # (list(list(int))) Puntos de la captura para realizar la transformación de perspectiva
  'password':    'sergio'                  # (str, null) Password necesario para la conexion al servidor
 }
 

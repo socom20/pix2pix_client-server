@@ -58,8 +58,6 @@ from pix2pix_wrapper import pix2pix_wrapper
 
 clients = []
 class Pix2Pix_predictor(WebSocket):
-
-    
     def predict(self, img_bytes):
         img   = Image.open( io.BytesIO(img_bytes) )
          
@@ -165,7 +163,13 @@ class Pix2Pix_predictor(WebSocket):
 
 
 def start_new_server(server):
-    server.serveforever()
+    try:
+        server.serveforever()
+    except ValueError as e:
+        pass
+    except Exception as e:
+        raise e
+    
     return None
 
 
@@ -189,8 +193,7 @@ class ws_server:
         self.keyfile  = keyfile
         ws_server.password = password
 
-    
-        
+
         self.ssl_version = ssl.PROTOCOL_TLSv1
 
         self.server = None
@@ -226,9 +229,10 @@ class ws_server:
     
 
     def close(self):
-        if self.ws_server is not None:
+        if self.server is not None:
             print(' - Closing WS Server ... Bye')
-            self.ws_server.close()
+            self.server.close()
+            self.server = None
 
 
         

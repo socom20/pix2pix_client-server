@@ -75,26 +75,37 @@ class cam_capture():
 
         return frame
 
-    def frame_pos_proc(self, frame, do_canny=True, do_close=True):
+    def frame_pos_proc(self, frame, do_canny=True, do_close=True, n_pix=5):
+        
+
         if self.M is None:
-            frame = cv2.resize(frame, self.cap_shape)
+            max_dim = max( frame.shape )
+            intermediate_shape = (int(512*frame.shape[0]/max_dim), int(512*frame.shape[1]/max_dim))
+            
+            frame = cv2.resize(frame, intermediate_shape)
         else:
+            max_dim = max( frame.shape )
+            intermediate_shape = (int(512*self.cap_shape[0]/max_dim), int(512*self.cap_shape[1]/max_dim))
+            
             frame = cv2.warpPerspective(frame,
                                         self.M,
                                         self.cap_shape)
-        if do_canny:
-            frame = cv2.Canny(frame, 100, 200)
+
         
-            if do_close:
+        if do_canny:
+            frame = cv2.Canny(frame, threshold1=100, threshold2=200)
+            
+            if do_close and n_pix > 0:
                 frame = cv2.morphologyEx(frame,
                                          cv2.MORPH_CLOSE,
-                                         cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5)))
+                                         cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (n_pix, n_pix)))
 
+        
+        frame = cv2.resize(frame, self.cap_shape)
+    
+        if do_canny:
             frame = 255-frame
-
-        if len(frame.shape) == 2:
-            frame = np.repeat(frame[...,np.newaxis], 3, axis=-1)
-            
+    
         return frame
         
 
@@ -140,10 +151,17 @@ class cam_capture():
 if __name__ == '__main__':
     
     
-    cam = cam_capture(cam_index=None,
-                      cap_shape=(256,300),
-                      img_path='./test_img.jpeg')
+##    cam = cam_capture(cam_index=None,
+##                      cap_shape=(256,300),
+##                      img_path='./test_img.jpeg',
+##                      pts=[[398,441],[202,521],[449,599],[267,698]])
 
+    cam = cam_capture(cam_index=None,
+                      cap_shape=(256,256),
+                      img_path='./test_face.jpeg',
+                      pts=None)
+
+    
     cam.test(do_canny=True)
 
 
