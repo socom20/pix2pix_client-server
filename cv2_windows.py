@@ -9,6 +9,7 @@ class cv2_windows:
         self.th = None
         self.keeprunning = False
         self.win_d = {}
+        self.fullscreen = False
         return None
     
 
@@ -41,8 +42,18 @@ class cv2_windows:
                 for win_name, (win_shape, win_img) in self.win_d.items():
                     cv2.imshow(win_name, win_img)
                 
-            if cv2.waitKey(1) & 0xFF == ord('q'):
+            wkey = cv2.waitKey(10) & 0xFF
+            if wkey == ord('q'):
                 break
+            
+            elif wkey == ord('f'):
+                self.fullscreen = not self.fullscreen
+                cv2.destroyAllWindows()
+                
+                if self.fullscreen:
+                    for win_name, (win_shape, win_img) in self.win_d.items():
+                        cv2.namedWindow(win_name, cv2.WND_PROP_FULLSCREEN)
+                        cv2.setWindowProperty(win_name, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 
         self.keeprunning = False
         cv2.destroyAllWindows()
@@ -53,9 +64,11 @@ class cv2_windows:
 
     def update_img(self, img, win_name=None):
         """ the image needs to be in RGB mode """
+        
         with self.lock:
             if win_name is None and len(self.win_d.keys()) == 1:
                 win_name = list(self.win_d.keys())[0]
+                
             elif win_name is None and len(self.win_d.keys()) > 1:
                 raise Exception(' - ERROR, update_img: you need to specify a win_name if there are more than one windows opened.')
         
@@ -66,7 +79,7 @@ class cv2_windows:
             img = np.repeat(img[...,np.newaxis], 3, axis=-1)
             
         img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-        win_img = cv2.resize(img, tuple(self.win_d[win_name][0]) )
+        win_img = cv2.resize(img, tuple(self.win_d[win_name][0][::-1]) )
         
         with self.lock:
             self.win_d[win_name][1] = win_img
@@ -76,6 +89,8 @@ class cv2_windows:
 
 if __name__ == '__main__':
     win = cv2_windows()
-    win.open_window(win_shape=(600,600), win_name='Prediction')
-    win.open_window(win_shape=(200,600), win_name='Prediction2')
-    
+    win.open_window(win_shape=(400,700), win_name='Prediction')
+##    win.open_window(win_shape=(200,600), win_name='Prediction2')
+
+    img = cv2.imread('test_img.jpeg')[:,:,::-1]
+    win.update_img(img)
