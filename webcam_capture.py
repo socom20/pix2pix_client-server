@@ -5,6 +5,7 @@ import cv2
 from cv2_windows import cv2_windows
 import os, sys
 
+
 class cam_capture():
     def __init__(self,
                  cam_index=0,
@@ -118,15 +119,17 @@ class cam_capture():
     def test(self, fps=30, do_canny=True):
         raw_frame = self._raw_capture()
 
-        self.windows = cv2_windows()
+        self.windows = cv2_windows(True)
 
-        self.windows.open_window(win_shape=(raw_frame.shape[1], raw_frame.shape[0]),
+        self.windows.open_window(win_shape=(raw_frame.shape[0], raw_frame.shape[1]),
                                  win_name='Raw Capture')
+
      
         self.windows.open_window(win_shape=self.cap_shape,
                                  win_name='Proc Capture')
         
 
+        
         
         while True:
             raw_frame  = self._raw_capture()
@@ -152,15 +155,20 @@ if __name__ == '__main__':
     
     
 ##    cam = cam_capture(cam_index=None,
-##                      cap_shape=(256,300),
+##                      cap_shape=(256,256),
 ##                      img_path='./test_img.jpeg',
 ##                      pts=[[398,441],[202,521],[449,599],[267,698]])
 
-    cam = cam_capture(cam_index=None,
-                      cap_shape=(256,256),
-                      img_path='./test_face.jpeg',
-                      pts=None)
+##    cam = cam_capture(cam_index=None,
+##                      cap_shape=(256,256),
+##                      img_path='./test_face.jpeg',
+##                      pts=None)
 
+    
+    cam = cam_capture(cam_index=0,
+                      cap_shape=(256,256),
+                      img_path='./test_img.jpeg',
+                      pts=[[264, 111],[285, 418],[466, 101],[486, 388]])
     
     cam.test(do_canny=True)
 

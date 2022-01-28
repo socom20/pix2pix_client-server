@@ -2,14 +2,23 @@ import numpy as np
 import cv2
 import threading
 
+def click_event(event, x, y, flags, params):
+
+    if event==cv2.EVENT_LBUTTONDOWN:
+        print(' Mouse Position = [{}, {}]'.format(x, y))
+
+    return None
+
 
 class cv2_windows:
     
-    def __init__(self):
+    def __init__(self, print_mouse_pos=False):
         self.th = None
         self.keeprunning = False
         self.win_d = {}
         self.fullscreen = False
+
+        self.set_mouse_event = print_mouse_pos
         return None
     
 
@@ -36,11 +45,18 @@ class cv2_windows:
 
 
     def _win_update(self):
-
+            
         while self.keeprunning:
             with self.lock:
                 for win_name, (win_shape, win_img) in self.win_d.items():
                     cv2.imshow(win_name, win_img)
+
+                if self.set_mouse_event and len(self.win_d.items()) > 0:
+                    for win_name, (win_shape, win_img) in self.win_d.items():
+                        print('Setting:', win_name)
+                        cv2.setMouseCallback(win_name, click_event)
+                        
+                    self.set_mouse_event = False
                 
             wkey = cv2.waitKey(10) & 0xFF
             if wkey == ord('q'):
@@ -88,8 +104,8 @@ class cv2_windows:
 
 
 if __name__ == '__main__':
-    win = cv2_windows()
-    win.open_window(win_shape=(400,700), win_name='Prediction')
+    win = cv2_windows(True)
+    win.open_window(win_shape=(500,700), win_name='Prediction')
 ##    win.open_window(win_shape=(200,600), win_name='Prediction2')
 
     img = cv2.imread('test_img.jpeg')[:,:,::-1]
